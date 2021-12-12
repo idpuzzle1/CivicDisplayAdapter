@@ -21,7 +21,6 @@ SpaceshipOledDisplay display(U8G2_SSD1309_128X64_NONAME0_F_4W_HW_SPI(U8G2_R0, DI
 
 Pin lightSignal = Pin(HVAC_LIGHTS);
 ButtonSet audioButtons = SpaceshipButtons::audioSwitchMaster(SW_AUDIO);
-ButtonSet hftButtons = SpaceshipButtons::hft(SW_HFT);
 PioneerButtonGenerator huButtons = PioneerButtonGenerator(HU_CS);
 
 struct ButtonState {
@@ -36,7 +35,6 @@ struct State
 {
   SpaceshipHvac::State hvac;
   ButtonState audioButton;
-  ButtonState hftButton;
 };
 State state;
 
@@ -58,7 +56,6 @@ void loop() {
   // Update Timers
   huButtons.updateTimer();
   audioButtons.updateButtons();
-  hftButtons.updateButtons();
 
   // Display
   //hvac.readState(state.hvac);
@@ -134,34 +131,19 @@ void printHvacSerial(SpaceshipHvac::State hvac) {
 
 void printButtonSerial(State state, State prevState) {
   bool pressedAudio = state.audioButton.pressedButton != prevState.audioButton.pressedButton;
-  bool pressedHft = state.hftButton.pressedButton != prevState.hftButton.pressedButton;
 
-  if (!pressedAudio && !pressedHft) {
+  if (!pressedAudio) {
     auto audioAdcOpenDiff = audioButtons.openAdcValue() - state.audioButton.adc;
-    auto hftAdcOpenDiff = hftButtons.openAdcValue() - state.hftButton.adc;
     bool unknownAudio = state.audioButton.pressedButton == 0 && abs(audioAdcOpenDiff) > audioButtons.tolerance;
-    bool unknownHft = state.hftButton.pressedButton == 0 && abs(hftAdcOpenDiff) > hftButtons.tolerance;
 
-    if (!unknownAudio && !unknownHft) {
-      return;
-    }
-
-    Serial.print("<");
+    
     if (unknownAudio) {
+      Serial.print("<");
       Serial.print("Audio Missed:");
       Serial.print("ADC=");
       Serial.print(state.audioButton.adc, DEC);
+      Serial.println(">");
     }
-    if (unknownAudio && unknownHft) {
-      Serial.print("; ");
-    }
-    if (unknownHft) {
-      Serial.print("HFT Missed:");
-      Serial.print("ADC=");
-      Serial.print(state.hftButton.adc, DEC);
-    }
-    Serial.println(">");
-    
     return;
   }
 
@@ -178,22 +160,6 @@ void printButtonSerial(State state, State prevState) {
     Serial.print(state.audioButton.pressedMillis,DEC);
     Serial.print("ms)");
   }
-  if (pressedAudio && pressedHft) {
-    Serial.print("; ");
-  }
-  if (pressedHft) {
-    Serial.print("HFT:");
-    Serial.print("[");
-    Serial.print(state.hftButton.adc,DEC);
-    Serial.print("] ");
-    Serial.print(prevState.hftButton.pressedButton,DEC);
-    Serial.print("->");
-    Serial.print(state.hftButton.pressedButton,DEC);
-    Serial.print(" (");
-    Serial.print(state.hftButton.pressedMillis,DEC);
-    Serial.print("ms)");
-  }
-  
   Serial.println(">");
 }
 
@@ -261,7 +227,6 @@ int8_t convertedHvacTemp(uint8_t value) {
 
 void getPressedButtons(State &state, State prevState) {
   getButtonsState(state.audioButton, prevState.audioButton, audioButtons);
-  getButtonsState(state.hftButton, prevState.hftButton, hftButtons);
 }
 
 void getButtonsState(ButtonState &state, ButtonState prevState, ButtonSet buttonsSet) {
@@ -298,26 +263,8 @@ void pressButton(State state) {
     break;
   }
   }
-  if (state.hftButton.pressedButton > 0) {
-  switch (state.hftButton.pressedButton) {
-    case SpaceshipButtons::HFT_BACK:
-    huButtons.wrRingHold(PioneerButtonGenerator::MUTE);
-    break;
-    case SpaceshipButtons::HFT_TALK:
-    huButtons.wrRingHold(PioneerButtonGenerator::VOICE);
-    break;
-    case SpaceshipButtons::HFT_HOOK_OFF:
-    huButtons.wrTipHold(PioneerButtonGenerator::BAND);
-    break;
-    case SpaceshipButtons::HFT_HOOK_ON:
-    huButtons.wrRingHold(PioneerButtonGenerator::HANG_UP);
-    break;
-    default:
-    break;
-  }
-  }
 
-  if ( state.audioButton.pressedButton == 0 && state.hftButton.pressedButton == 0) {
+  if ( state.audioButton.pressedButton == 0) {
     huButtons.wrRelease();
   }
 }
