@@ -2,9 +2,13 @@
 #include "SpaceshipButtons.h"
 
 static const uint8_t AUDIO_LEVELS_COUNT = 6;
+//                                                              { MODE, CH+, CH-, VOL+, VOL- }
 //static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {931, 807, 644, 447, 269, 92};
 //static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {880, 760, 614, 426, 255, 93};
-static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {866, 750, 620, 452, 302, 155};
+//static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {866, 750, 620, 452, 302, 155};
+//static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {750, 680, 570, 433, 317, 200};
+//static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {900, 780, 632, 455, 300, 145};
+static const uint16_t AUDIO_MASTER_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {920, 810, 665, 460, 330, 157};
 static const uint8_t AUDIO_MASTER_TOLERANCE = 10;
 static const uint16_t AUDIO_SLAVE_LEVELS[AUDIO_LEVELS_COUNT] PROGMEM = {512, 430, 338, 227, 135, 43};
 static const uint8_t AUDIO_SLAVE_TOLERANCE = 20;

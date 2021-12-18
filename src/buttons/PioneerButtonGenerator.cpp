@@ -40,11 +40,13 @@ void PioneerButtonGenerator::wrTipHold(int digiValue) {
     if (holdMs > 0) {
         wrRelease();
     }
+    SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
     csPin.writeLow();
     SPI.transfer(wiperTip);
     SPI.transfer(digiValue);
 //      Serial.println(" Hold"); // for debug
     csPin.writeHigh();
+    SPI.endTransaction();
 }
 
 void PioneerButtonGenerator::wrRing(int digiValue, int delayMs) {
@@ -56,6 +58,7 @@ void PioneerButtonGenerator::wrRingHold(int digiValue) {
     if (holdMs > 0) {
         wrRelease();
     }
+    SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
     csPin.writeLow();
     SPI.transfer(wiperRing);
     SPI.transfer(ground);
@@ -63,19 +66,22 @@ void PioneerButtonGenerator::wrRingHold(int digiValue) {
     SPI.transfer(wiperTip);
     SPI.transfer(digiValue);
     csPin.writeHigh();
+    SPI.endTransaction();
 }
 
 void PioneerButtonGenerator::wrRelease() {
     holdMs = 0;
     startHoldMs = 0;
+    SPI.beginTransaction(SPISettings(250000, MSBFIRST, SPI_MODE0));
     csPin.writeLow();
     SPI.transfer(wiperTip);
     SPI.transfer(ground);
     if (isRing) {
         SPI.transfer(wiperRing);
-        SPI.transfer(255); // float
+        SPI.transfer(0); // float
     }
     //      Serial.println(" Button Release"); // for debug
     csPin.writeHigh();
     isRing = false;
+    SPI.endTransaction();
 }

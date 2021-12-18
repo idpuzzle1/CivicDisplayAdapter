@@ -54,14 +54,14 @@ void loop() {
   auto prevState = state;
   
   // Update Timers
-  huButtons.updateTimer();
+  //huButtons.updateTimer();
   audioButtons.updateButtons();
 
   // Display
   //hvac.readState(state.hvac);
 
   drawDisplay(state.hvac);
-  //printHvacSerial(state.hvac);
+  printHvacSerial(state.hvac, prevState.hvac);
 
   if (lightSignal.read()) {
     display.setBrightness(255);
@@ -72,7 +72,7 @@ void loop() {
   // Buttons
   getPressedButtons(state, prevState);
   //pressButton(prevState);
-  printButtonSerial(state, prevState);
+  //printButtonSerial(state, prevState);
 
   updateTestState(state);
 
@@ -100,7 +100,20 @@ void setupTestState(SpaceshipHvac::State &state) {
   state.airDirection = 4;
 }
 
-void printHvacSerial(SpaceshipHvac::State hvac) {
+void printHvacSerial(SpaceshipHvac::State hvac, SpaceshipHvac::State prevHvac) {
+  if (
+    hvac.connected == prevHvac.connected &&
+    hvac.temp1 == prevHvac.temp1 &&
+    hvac.temp2 == prevHvac.temp2 &&
+    hvac.autoMode == prevHvac.autoMode &&
+    hvac.acOn == prevHvac.acOn &&
+    hvac.acOff == prevHvac.acOff &&
+    hvac.fanSpeed == prevHvac.fanSpeed &&
+    hvac.airDirection == prevHvac.airDirection
+  ) {
+    return;
+  }
+
   if (!hvac.connected) {
     Serial.print("<");
     Serial.print("OFF");
@@ -145,12 +158,23 @@ void printButtonSerial(State state, State prevState) {
       Serial.println(">");
     }
     return;
-  }
-
-  Serial.print("<");
-  if (pressedAudio) {
+  } else {
+    Serial.print("<");
     Serial.print("Audio:");
-    Serial.print("[");
+
+    if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_MODE) {
+      Serial.print(" MODE");
+    } else if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_CH_PLUS) {
+      Serial.print(" CH+");
+    } else if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_CH_MINUS) {
+      Serial.print(" CH-");
+    } else if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_VOL_PLUS) {
+      Serial.print(" VOL+");
+    } else if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_VOL_MINUS) {
+      Serial.print(" VOL-");
+    } 
+
+    Serial.print(" [");
     Serial.print(state.audioButton.adc,DEC);
     Serial.print("] ");
     Serial.print(prevState.audioButton.pressedButton,DEC);
@@ -159,8 +183,8 @@ void printButtonSerial(State state, State prevState) {
     Serial.print(" (");
     Serial.print(state.audioButton.pressedMillis,DEC);
     Serial.print("ms)");
+    Serial.println(">");
   }
-  Serial.println(">");
 }
 
 void drawDisplay(SpaceshipHvac::State hvac) {
@@ -269,9 +293,19 @@ void pressButton(State state) {
   }
 }
 
-void updateTestState(State state) {
-  uint16_t pressThreshold = 20;
+void updateTestState(State &state) {
+  uint16_t pressThreshold = 120;
+
+  // if (state.audioButton.pressedButton > 0) {
+  //   Serial.print("Pressed Button: ");
+  //   Serial.print(state.audioButton.pressedButton, DEC);
+  //   Serial.print(" [");
+  //   Serial.print(state.audioButton.pressedMillis, DEC);
+  //   Serial.println(" ms]");
+  // }
+
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_VOL_MINUS && state.audioButton.pressedMillis < pressThreshold) {
+    Serial.println("STATE: TEMP-");
     if (state.hvac.temp1 > SpaceshipHvac::TEMP_LO) {
       state.hvac.temp1--;
     } else {
@@ -279,6 +313,7 @@ void updateTestState(State state) {
     }
   }
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_VOL_PLUS && state.audioButton.pressedMillis < pressThreshold) {
+    Serial.println("STATE: TEMP+");
     if (state.hvac.temp1 < SpaceshipHvac::TEMP_HI) {
       state.hvac.temp1++;
     } else {
@@ -286,6 +321,7 @@ void updateTestState(State state) {
     }
   }
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_CH_MINUS && state.audioButton.pressedMillis < pressThreshold) {
+    Serial.println("STATE: FAN-");
     if (state.hvac.fanSpeed > 0) {
       state.hvac.fanSpeed--;
     } else {
@@ -293,6 +329,7 @@ void updateTestState(State state) {
     }
   }
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_CH_PLUS && state.audioButton.pressedMillis < pressThreshold) {
+    Serial.println("STATE: FAN+");
     if (state.hvac.fanSpeed < 7) {
       state.hvac.fanSpeed++;
     } else {
@@ -300,6 +337,7 @@ void updateTestState(State state) {
     }
   }
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_MODE && state.audioButton.pressedMillis < pressThreshold) {
+    Serial.println("STATE: AIR MODE");
     if (state.hvac.airDirection < 5) {
       state.hvac.airDirection++;
     } else {

@@ -18,10 +18,10 @@ class PioneerButtonGenerator {
     //digipot values
 
     static const uint8_t SOURCE = 2; //1,2k	1 - 5
-    static const uint8_t TRACK_NEXT = 19; //8,2k	17 - 22
-    static const uint8_t TRACK_PREV = 27; //11,25k	23 -32
-    static const uint8_t VOL_UP = 42; //16k	33 - 46
-    static const uint8_t VOL_DOWN = 55; //24k	47 - 72
+    static const uint8_t TRACK_NEXT = 10; //8,2k	17 - 22
+    static const uint8_t TRACK_PREV = 14; //11,25k	23 -32
+    static const uint8_t VOL_UP = 21; //16k	33 - 46
+    static const uint8_t VOL_DOWN = 31; //24k	47 - 72
     static const uint8_t BAND = 100; //62,75k	88 - 212 //Play/Pause
     static const uint8_t DISP = 180; //5,75	12 - 16
     static const uint8_t MUTE = 8; //3,5	6 - 11
