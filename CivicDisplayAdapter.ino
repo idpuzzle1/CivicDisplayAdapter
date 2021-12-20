@@ -11,7 +11,7 @@
 #include "src/hvac/SpaceshipHvac.h"
 #include "src/display/SpaceshipOledDisplay.h"
 #include "src/buttons/SpaceshipButtons.h"
-#include "src/buttons/PioneerButtonGenerator.h"
+#include "src/buttons/PioneerSimpleButtons.h"
 
 const uint16_t LOOP_PERIOD_MS = 50;
 const uint32_t LOOP_PERIOD_US = LOOP_PERIOD_MS * 1000L;
@@ -21,7 +21,7 @@ SpaceshipOledDisplay display(U8G2_SSD1309_128X64_NONAME0_F_4W_HW_SPI(U8G2_R0, DI
 
 Pin lightSignal = Pin(HVAC_LIGHTS);
 ButtonSet audioButtons = SpaceshipButtons::audioSwitchMaster(SW_AUDIO);
-PioneerButtonGenerator huButtons = PioneerButtonGenerator(HU_CS);
+PioneerSimpleButtons huButtons = PioneerSimpleButtons(HU_CS);
 
 struct ButtonState {
   uint8_t lastReleasedButton = 0;
@@ -71,10 +71,11 @@ void loop() {
 
   // Buttons
   getPressedButtons(state, prevState);
-  //pressButton(prevState);
+  //pressTestButton(state);
+  pressButton(state, prevState);
   //printButtonSerial(state, prevState);
 
-  updateTestState(state);
+  //updateTestState(state);
 
   static const uint32_t LOOP_TIME_ADJUST_US = 50;
   auto loopTimeUs = micros() - startTimeUs + LOOP_TIME_ADJUST_US;
@@ -94,8 +95,8 @@ void setupTestState(SpaceshipHvac::State &state) {
   state.acOn = true;
   state.autoMode = true;
 
-  state.temp1 = SpaceshipHvac::TEMP_HI;
-  state.temp2 = SpaceshipHvac::TEMP_LO;
+  state.temp1 = SpaceshipHvac::TEMP_LO;
+  state.temp2 = SpaceshipHvac::TEMP_HI;
   state.fanSpeed = 5;
   state.airDirection = 4;
 }
@@ -264,32 +265,56 @@ void getButtonsState(ButtonState &state, ButtonState prevState, ButtonSet button
   }
 }
 
-void pressButton(State state) {
-  if (state.audioButton.pressedButton > 0) {
+uint8_t huValue = 0;
+void pressTestButton(State state) {
   switch (state.audioButton.pressedButton)
   {
-  case SpaceshipButtons::AUDIO_MODE:
-    huButtons.wrTipHold(PioneerButtonGenerator::SOURCE);
-    break;
-  case SpaceshipButtons::AUDIO_CH_MINUS:
-    huButtons.wrTipHold(PioneerButtonGenerator::TRACK_PREV);
-    break;
-    case SpaceshipButtons::AUDIO_CH_PLUS:
-    huButtons.wrTipHold(PioneerButtonGenerator::TRACK_NEXT);
+    case SpaceshipButtons::AUDIO_VOL_PLUS:
+    Serial.print("Output Resistance: ");
+    Serial.println(huValue, DEC);
+    huButtons.sendValue(++huValue);
     break;
     case SpaceshipButtons::AUDIO_VOL_MINUS:
-    huButtons.wrTipHold(PioneerButtonGenerator::VOL_DOWN);
-    break;
-    case SpaceshipButtons::AUDIO_VOL_PLUS:
-    huButtons.wrTipHold(PioneerButtonGenerator::VOL_UP);
+    Serial.print("Output Resistance: ");
+    Serial.println(huValue, DEC);
+    huButtons.sendValue(--huValue);
     break;
     default:
+    //huButtons.releaseButton();
     break;
   }
+}
+
+void pressButton(State state, State prevState) {
+  if (state.audioButton.pressedButton == prevState.audioButton.pressedButton) {
+    return;
   }
 
-  if ( state.audioButton.pressedButton == 0) {
-    huButtons.wrRelease();
+  switch (state.audioButton.pressedButton)
+  {
+    case SpaceshipButtons::AUDIO_MODE:
+    Serial.println("Pioneer: Source");
+    huButtons.pressButton(PioneerSimpleButtons::SOURCE);
+    break;
+    case SpaceshipButtons::AUDIO_CH_MINUS:
+    Serial.println("Pioneer: Track -");
+    huButtons.pressButton(PioneerSimpleButtons::TRACK_PREV);
+    break;
+    case SpaceshipButtons::AUDIO_CH_PLUS:
+    Serial.println("Pioneer: Track +");
+    huButtons.pressButton(PioneerSimpleButtons::TRACK_NEXT);
+    break;
+    case SpaceshipButtons::AUDIO_VOL_MINUS:
+    Serial.println("Pioneer: Volume -");
+    huButtons.pressButton(PioneerSimpleButtons::VOL_DOWN);
+    break;
+    case SpaceshipButtons::AUDIO_VOL_PLUS:
+    Serial.println("Pioneer: Volume +");
+    huButtons.pressButton(PioneerSimpleButtons::VOL_UP);
+    break;
+    default:
+    huButtons.releaseButton();
+    break;
   }
 }
 
@@ -305,16 +330,22 @@ void updateTestState(State &state) {
   // }
 
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_VOL_MINUS && state.audioButton.pressedMillis < pressThreshold) {
-    Serial.println("STATE: TEMP-");
-    if (state.hvac.temp1 > SpaceshipHvac::TEMP_LO) {
+    Serial.print("STATE: TEMP- - ");
+    Serial.println(state.hvac.temp1, DEC);
+    if (state.hvac.temp1 == SpaceshipHvac::TEMP_HI) {
+      state.hvac.temp1 = 28;
+    } else if (state.hvac.temp1 > SpaceshipHvac::TEMP_LO) {
       state.hvac.temp1--;
     } else {
       state.hvac.temp1 = SpaceshipHvac::TEMP_LO;
     }
   }
   if (state.audioButton.pressedButton == SpaceshipButtons::AUDIO_VOL_PLUS && state.audioButton.pressedMillis < pressThreshold) {
-    Serial.println("STATE: TEMP+");
-    if (state.hvac.temp1 < SpaceshipHvac::TEMP_HI) {
+    Serial.print("STATE: TEMP+ - ");
+    Serial.println(state.hvac.temp1, DEC);
+    if (state.hvac.temp1 == SpaceshipHvac::TEMP_LO) {
+      state.hvac.temp1 = 16;
+    } else if (state.hvac.temp1 < SpaceshipHvac::TEMP_HI) {
       state.hvac.temp1++;
     } else {
       state.hvac.temp1 = SpaceshipHvac::TEMP_HI;
