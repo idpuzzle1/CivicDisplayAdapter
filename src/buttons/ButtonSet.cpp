@@ -2,7 +2,7 @@
 
 #include "ButtonSet.h"
 
-static const uint16_t refreshThreshold = 10;
+static const uint16_t refreshThreshold = 1;
 
 ButtonSet::ButtonSet(uint8_t pinNumber, uint8_t tolerance, uint8_t levelsCount, const uint16_t *levels)
         : pinNumber(pinNumber),
